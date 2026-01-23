@@ -15,7 +15,9 @@ class AppInstallConfig {
   String? url;
 }
 
+
 @HostApi()
 abstract class AppInstallApi {
-  void installApp(AppInstallConfig config);
+  @async
+  bool installApp(AppInstallConfig config);
 }

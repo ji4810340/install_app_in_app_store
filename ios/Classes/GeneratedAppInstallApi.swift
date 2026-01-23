@@ -85,6 +85,7 @@ struct AppInstallConfig {
     ]
   }
 }
+
 private class AppInstallApiCodecReader: FlutterStandardReader {
   override func readValue(ofType type: UInt8) -> Any? {
     switch type {
@@ -123,7 +124,7 @@ class AppInstallApiCodec: FlutterStandardMessageCodec {
 
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol AppInstallApi {
-  func installApp(config: AppInstallConfig) throws
+  func installApp(config: AppInstallConfig, completion: @escaping (Result<Bool, Error>) -> Void)
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -138,11 +139,13 @@ class AppInstallApiSetup {
       installAppChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let configArg = args[0] as! AppInstallConfig
-        do {
-          try api.installApp(config: configArg)
-          reply(wrapResult(nil))
-        } catch {
-          reply(wrapError(error))
+        api.installApp(config: configArg) { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
         }
       }
     } else {

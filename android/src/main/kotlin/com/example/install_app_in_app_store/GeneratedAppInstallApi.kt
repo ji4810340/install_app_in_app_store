@@ -83,6 +83,7 @@ data class AppInstallConfig (
     )
   }
 }
+
 private object AppInstallApiCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -107,7 +108,7 @@ private object AppInstallApiCodec : StandardMessageCodec() {
 
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface AppInstallApi {
-  fun installApp(config: AppInstallConfig)
+  fun installApp(config: AppInstallConfig, callback: (Result<Boolean>) -> Unit)
 
   companion object {
     /** The codec used by AppInstallApi. */
@@ -123,13 +124,15 @@ interface AppInstallApi {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
             val configArg = args[0] as AppInstallConfig
-            val wrapped: List<Any?> = try {
-              api.installApp(configArg)
-              listOf<Any?>(null)
-            } catch (exception: Throwable) {
-              wrapError(exception)
+            api.installApp(configArg) { result: Result<Boolean> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(wrapResult(data))
+              }
             }
-            reply.reply(wrapped)
           }
         } else {
           channel.setMessageHandler(null)

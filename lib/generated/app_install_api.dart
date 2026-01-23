@@ -107,7 +107,7 @@ class AppInstallApi {
 
   final String __pigeon_messageChannelSuffix;
 
-  Future<void> installApp(AppInstallConfig config) async {
+  Future<bool> installApp(AppInstallConfig config) async {
     final String __pigeon_channelName = 'dev.flutter.pigeon.install_app_in_app_store.AppInstallApi.installApp$__pigeon_messageChannelSuffix';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
       __pigeon_channelName,
@@ -124,8 +124,13 @@ class AppInstallApi {
         message: __pigeon_replyList[1] as String?,
         details: __pigeon_replyList[2],
       );
+    } else if (__pigeon_replyList[0] == null) {
+      throw PlatformException(
+        code: 'null-error',
+        message: 'Host platform returned null value for non-null return value.',
+      );
     } else {
-      return;
+      return (__pigeon_replyList[0] as bool?)!;
     }
   }
 }

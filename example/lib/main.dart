@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:install_app_in_app_store/install_app_in_app_store.dart';
 
 void main() {
@@ -16,51 +15,44 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
   final _installAppInAppStorePlugin = InstallAppInAppStore();
+  int iosAppId = 1234567890;
+  String androidPackageName = 'com.example.app';
+  String? errorMessage;
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
-  }
-
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
-    try {
-      platformVersion =
-          await _installAppInAppStorePlugin.getPlatformVersion() ??
-              'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
-    });
   }
 
   Future<void> _installApp() async {
     try {
       final config = AppInstallConfig(
-        iosAppId: 1234567890,
+        iosAppId: iosAppId,
         iosAffiliateToken: 'your_affiliate_token',
         iosCampaignToken: 'your_campaign_token',
-        androidPackageName: 'com.example.app',
+        androidPackageName: androidPackageName,
       );
       await _installAppInAppStorePlugin.installApp(config);
-    } on PlatformException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.message}')),
-      );
+    } on AppInstallException catch (e) {
+      if (!mounted) return;
+
+      errorMessage = e.message;
+
+      if (e.isStoreProductNotAvailable) {
+        errorMessage = '该应用在您所在地区不可用';
+      } else if (e.isUnknownSkError) {
+        errorMessage = '加载失败，请检查网络连接或稍后重试';
+      } else if (e.isNetworkError) {
+        errorMessage = '网络连接失败，请检查您的网络';
+      } else if (e.isInvalidParameter) {
+        errorMessage = '配置参数无效';
+      } else if (e.isNoRootViewController) {
+        errorMessage = '应用界面加载失败';
+      }
+      setState(() {
+
+      });
     }
   }
 
@@ -75,11 +67,13 @@ class _MyAppState extends State<MyApp> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Running on: $_platformVersion\n'),
+              Text('IOS APP on: $iosAppId\n'),
+              Text('安卓 APP on: $androidPackageName\n'),
               ElevatedButton(
                 onPressed: _installApp,
                 child: const Text('Install App'),
               ),
+              if (errorMessage?.isNotEmpty == true) Text('错误 on: $errorMessage\n'),
             ],
           ),
         ),
