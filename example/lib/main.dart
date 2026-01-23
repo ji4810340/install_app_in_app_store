@@ -40,9 +40,6 @@ class _MyAppState extends State<MyApp> {
         setState(() {
           errorMessage = null;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('应用安装页面已打开')),
-        );
       },
       onError: (exception) {
         if (!mounted) return;

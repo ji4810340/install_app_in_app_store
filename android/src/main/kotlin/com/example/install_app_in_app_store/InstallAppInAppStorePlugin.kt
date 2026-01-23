@@ -59,10 +59,11 @@ class InstallAppInAppStorePlugin: FlutterPlugin, MethodCallHandler, ActivityAwar
     activityBinding = null
   }
 
-  override fun installApp(config: AppInstallConfig) {
+  override fun installApp(config: AppInstallConfig, callback: (Result<Boolean>) -> Unit) {
     val packageName = config.androidPackageName
     if (packageName.isNullOrEmpty()) {
-      throw FlutterError("INVALID_CONFIG", "androidPackageName is required for Android", null)
+      callback(Result.failure(FlutterError("INVALID_CONFIG", "androidPackageName is required for Android", null)))
+      return
     }
 
     try {
@@ -71,8 +72,9 @@ class InstallAppInAppStorePlugin: FlutterPlugin, MethodCallHandler, ActivityAwar
         setPackage("com.android.vending")
       }
       activityBinding?.activity?.startActivity(intent)
+      callback(Result.success(true))
     } catch (e: Exception) {
-      throw FlutterError("INSTALL_FAILED", e.message, null)
+      callback(Result.failure(FlutterError("INSTALL_FAILED", e.message, null)))
     }
   }
 }
