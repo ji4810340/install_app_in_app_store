@@ -9,16 +9,23 @@ class InstallAppInAppStore {
     return InstallAppInAppStorePlatform.instance.getPlatformVersion();
   }
 
-  Future<void> installApp(AppInstallConfig config) async {
+  Future<void> installApp(
+    AppInstallConfig config, {
+    VoidCallback? onSuccess,
+    Function(AppInstallException)? onError,
+  }) async {
     final api = AppInstallApi();
     try {
-        await api.installApp(config);
+      await api.installApp(config);
+      onSuccess?.call();
     } on PlatformException catch (e) {
-      throw AppInstallException(
+      final exception = AppInstallException(
         code: e.code,
         message: e.message ?? 'Unknown error',
         details: e.details,
       );
+      onError?.call(exception);
+      throw exception;
     }
   }
 }

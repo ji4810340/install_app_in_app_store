@@ -26,34 +26,46 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _installApp() async {
-    try {
-      final config = AppInstallConfig(
-        iosAppId: iosAppId,
-        iosAffiliateToken: 'your_affiliate_token',
-        iosCampaignToken: 'your_campaign_token',
-        androidPackageName: androidPackageName,
-      );
-      await _installAppInAppStorePlugin.installApp(config);
-    } on AppInstallException catch (e) {
-      if (!mounted) return;
+    final config = AppInstallConfig(
+      iosAppId: iosAppId,
+      iosAffiliateToken: 'your_affiliate_token',
+      iosCampaignToken: 'your_campaign_token',
+      androidPackageName: androidPackageName,
+    );
 
-      errorMessage = e.message;
+    await _installAppInAppStorePlugin.installApp(
+      config,
+      onSuccess: () {
+        if (!mounted) return;
+        setState(() {
+          errorMessage = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('应用安装页面已打开')),
+        );
+      },
+      onError: (exception) {
+        if (!mounted) return;
 
-      if (e.isStoreProductNotAvailable) {
-        errorMessage = '该应用在您所在地区不可用';
-      } else if (e.isUnknownSkError) {
-        errorMessage = '加载失败，请检查网络连接或稍后重试';
-      } else if (e.isNetworkError) {
-        errorMessage = '网络连接失败，请检查您的网络';
-      } else if (e.isInvalidParameter) {
-        errorMessage = '配置参数无效';
-      } else if (e.isNoRootViewController) {
-        errorMessage = '应用界面加载失败';
-      }
-      setState(() {
+        String message = exception.message;
 
-      });
-    }
+        if (exception.isStoreProductNotAvailable) {
+          message = '该应用在您所在地区不可用';
+        } else if (exception.isUnknownSkError) {
+          message = '加载失败，请检查网络连接或稍后重试';
+        } else if (exception.isNetworkError) {
+          message = '网络连接失败，请检查您的网络';
+        } else if (exception.isInvalidParameter) {
+          message = '配置参数无效';
+        } else if (exception.isNoRootViewController) {
+          message = '应用界面加载失败';
+        }
+
+        setState(() {
+          errorMessage = message;
+        });
+      },
+    );
   }
 
   @override
@@ -73,7 +85,8 @@ class _MyAppState extends State<MyApp> {
                 onPressed: _installApp,
                 child: const Text('Install App'),
               ),
-              if (errorMessage?.isNotEmpty == true) Text('错误 on: $errorMessage\n'),
+              if (errorMessage?.isNotEmpty == true)
+                Text('错误 on: $errorMessage\n'),
             ],
           ),
         ),
